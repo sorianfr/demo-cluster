@@ -42,6 +42,9 @@ clusters = [
     worker_instance_type    = "t3.small"
     worker_public_ip        = true
     key_name                = "cluster-b.pem"
+    k3s_version             = "1.29"
+    k3s_features            = "traefik,local-storage,metrics-server"
+    files_path              = "files/"
  }
 ]
                                                                 
