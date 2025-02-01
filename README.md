@@ -13,6 +13,12 @@ git clone https://github.com/sorianfr/demo-cluster.git
 cd demo-cluster
 ```
 
+Change the default Calico encapsulation to IPIP
+
+```
+sed -i  "s/VXLAN/IPIPCrossSubnet/" files/calico-install.sh
+```
+
 Open up `terraform.tfvars` and adjust the variables as you like or add new clusters to the list.
 
 Use the following command to install the require provider:
