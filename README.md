@@ -46,18 +46,18 @@ Use the following command to copy the cluster-a config file:
 export PUBLIC_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip')
 echo "Public IP for cluster-a: $PUBLIC_IP"
 
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip"):~/.kube/config ca-config
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip'):~/.kube/config ca-config
 
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json cluster-a | jq -r ".instance_1_public_ip"):~/.kube/config ca-config
-
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json kubernetes_clusters.value["cluster-a"] | jq -r ".instance_1_public_ip"):~/.kube/config ca-config
-
-sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip')/" config-cluster-a
-sed -i "s/default/cluster-a/" config-cluster-a
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-b.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip'):~/.kube/config cb-config
 
 
-sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip')/" config-cluster-b
-sed -i "s/default/cluster-b/" config-cluster-b
+
+sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip')/" ca-config
+sed -i "s/default/cluster-a/" ca-config
+
+
+sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip')/" cb-config
+sed -i "s/default/cluster-b/" cb-config
 
 
 export CLUSTER_A_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_private_ip')
@@ -69,8 +69,7 @@ export CLUSTER_B_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_cluste
 
 export CLUSTER_B_WORKER_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].workers_ip.private_ip[0]')
 
-export KUBECONFIG=$PWD/config-cluster-a:$PWD/config-cluster-b
-
+export KUBECONFIG=$PWD/ca-config:$PWD/cb-config
 
 
 ```
