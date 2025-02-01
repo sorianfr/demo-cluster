@@ -1,16 +1,8 @@
 # Demo cluster
 
-A simple terraform project to quickly test out K8s variations.
-
-# Requirements 
-
-- terraform
-- cloud account
-- a bit of time
+Terraform project to delpoy multiple clusters in AWS
 
 # How to
-
-> I'm not going to say give it star since you Obviously have done it before getting to this step ;)
 
 Clone the repository.
 ```
@@ -18,12 +10,7 @@ git clone https://github.com/sorianfr/demo-cluster.git
 cd demo-cluster
 ```
 
-Copy a template from examples folder.
-```
-cp examples/main.tf-awspmulticluster main.tf
-```
-
-Open up the newly created `main.tf` and adjust the variables as you like.
+Open up `terraform.tfvars` and adjust the variables as you like or add new clusters to the list.
 
 Use the following command to install the require provider:
 ```
@@ -47,12 +34,3 @@ after a successful deployment use the `demo_connection` from the output to ssh i
 # Clean up
 Keep in mind that cloud providers charge you based on the time that you have spent on running resources,at any point you can use `terraform destroy` to completely destroy the project and.
 
-# Available variables
-
-Each templates offers variables that can be changed to adjust aspects of your deployment.
-You can change these values by adjusting the `examples` files.
-```
-
-# Disclaimer
-
-This project is for educational purposes. Do not use this project to start a production environment.
