@@ -20,7 +20,7 @@ cd demo-cluster
 
 Copy a template from examples folder.
 ```
-cp examples/main.tf-gcpmulticluster main.tf
+cp examples/main.tf-awspmulticluster main.tf
 ```
 
 Open up the newly created `main.tf` and adjust the variables as you like.
