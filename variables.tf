@@ -1,4 +1,9 @@
-variable "aws_region" {}
+variable "region" {
+  description = "AWS region for all resources"
+  type        = string
+  default     = "us-east-1" # Optional default value
+}
+
 variable "aws_profile" {}
 variable "credential_file" {}
 variable "vpc_name" {}
