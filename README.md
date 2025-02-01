@@ -73,6 +73,47 @@ export KUBECONFIG=$PWD/ca-config:$PWD/cb-config
 
 
 ```
+
+```
+alias kubectl="kubectl --insecure-skip-tls-verify"
+```
+
+```
+kubectl --context cluster-a create -f -<<EOF
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  logSeverityScreen: Info
+  asNumber: 65001
+  listenPort: 179
+  nodeToNodeMeshEnabled: false
+  serviceClusterIPs:
+    - cidr: 10.43.0.0/16
+EOF
+```
+
+```
+kubectl --context cluster-b create -f -<<EOF
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  logSeverityScreen: Info
+  asNumber: 65002
+  listenPort: 179
+  nodeToNodeMeshEnabled: false
+  serviceClusterIPs:
+    - cidr: 10.53.0.0/16
+EOF
+```
+
+```
+
+```
+
 # Clean up
 Keep in mind that cloud providers charge you based on the time that you have spent on running resources,at any point you can use `terraform destroy` to completely destroy the project and.
 
