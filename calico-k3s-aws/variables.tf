@@ -45,17 +45,19 @@ variable "credential_file" {
   default = "~/.aws/credentials"
 }
 
-variable "cidr_block" {
-  type    = string
+variable "vpc_cidr_block" {
+  type = string
   default = "172.16.0.0/16"
+
 }
 
-variable "pod_cidr_block" {
+
+variable "pod_cidr" {
   type    = string
   default = "172.32.0.0/16"
 }
 
-variable "service_cidr_block" {
+variable "service_cidr" {
   type    = string
   default = "172.34.0.0/16"
 }
@@ -64,6 +66,12 @@ variable "k3s_features" {
   type    = string
   default = "traefik,local-storage,metrics-server,service-lb"
 }
+
+variable "cluster_name" {
+  type    = string
+}
+
+
 
 variable "cluster_domain" {
   type    = string
@@ -76,7 +84,7 @@ variable "worker_count" {
 
 variable "k3s_version" {
   type    = string
-  default = "1.27"
+  default = "1.29"
 }
 
 variable "files_path" {
@@ -84,7 +92,7 @@ variable "files_path" {
   default = "../"
 }
 
-variable "cluster_key_name" {
+variable "key_name" {
   type    = string
   default = "calico-demo.pem"
 }
@@ -92,4 +100,20 @@ variable "cluster_key_name" {
 variable "disable_cloud_provider" {
   type    = bool
   default = true
+}
+
+
+variable "vpc_id" {
+  description = "VPC ID for the Kubernetes cluster"
+  type        = string
+}
+
+
+variable "igw_id" {
+  description = "Internet Gateway ID for the VPC"
+  type        = string
+}
+
+variable "idx" {
+ type = number
 }

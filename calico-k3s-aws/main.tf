@@ -1,7 +1,10 @@
-provider "aws" {
-  region                   = var.region
-  shared_credentials_files = [var.credential_file]
-  profile                  = var.profile
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
 }
 
 resource "random_string" "rand_chars" {
@@ -12,52 +15,35 @@ resource "random_string" "rand_chars" {
   special = false
 }
 
-resource "aws_vpc" "k3s_demo_vpc" {
-  cidr_block = var.cidr_block
-  tags = {
-    Environment = "Calico Demo"
-    Name        = "Calico Demo VPC"
-  }
-}
-
-resource "aws_internet_gateway" "k3s_demo_igw" {
-  vpc_id = aws_vpc.k3s_demo_vpc.id
-
-  tags = {
-    Environment = "Calico Demo"
-    Name        = "Calico Demo igw"
-  }
-}
-
 resource "aws_subnet" "k3s_demo_subnet_1" {
-  vpc_id            = aws_vpc.k3s_demo_vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.k3s_demo_vpc.cidr_block, 8, 1)
+  vpc_id            = var.vpc_id
+  cidr_block        = cidrsubnet(var.vpc_cidr_block, 8 , var.idx * 2 - 1)
   availability_zone = var.availability_zone_names[0]
   tags = {
     Environment = "Calico Demo"
-    Name        = "Calico Demo Subnet 1"
+    Name        = "Calico Demo ${var.cluster_name} Subnet 1"
   }
 }
 
 resource "aws_subnet" "k3s_demo_subnet_2" {
-  vpc_id            = aws_vpc.k3s_demo_vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.k3s_demo_vpc.cidr_block, 8, 2)
+  vpc_id            = var.vpc_id
+  cidr_block        = cidrsubnet(var.vpc_cidr_block, 8, var.idx * 2)
   availability_zone = length(var.availability_zone_names) > 1 ? var.availability_zone_names[1] : var.availability_zone_names[0]
   tags = {
     Environment = "Calico Demo"
-    Name        = "Calico Demo Subnet 2"
+    Name        = "Calico Demo ${var.cluster_name} Subnet 2"
   }
 }
 
 resource "aws_route_table" "k3s_demo_routes" {
-  vpc_id = aws_vpc.k3s_demo_vpc.id
+  vpc_id = var.vpc_id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.k3s_demo_igw.id
+    gateway_id = var.igw_id
   }
   tags = {
     Environment = "Calico Demo"
-    Name        = "Calico Demo Route"
+    Name        = "Calico Demo ${var.cluster_name} Route"
   }
 }
 
@@ -72,8 +58,8 @@ resource "aws_route_table_association" "k3s_demo_route_associate2" {
 }
 
 resource "aws_security_group" "k3s_demo_SG" {
-  name   = "Calico Demo SG"
-  vpc_id = aws_vpc.k3s_demo_vpc.id
+  name   = "Calico Demo ${var.cluster_name} SG"
+  vpc_id = var.vpc_id
 
   ingress {
     description = "Allow SSH from remote sources."
@@ -96,7 +82,7 @@ resource "aws_security_group" "k3s_demo_SG" {
     from_port   = 0
     to_port     = 0
     protocol    = -1
-    cidr_blocks = [aws_vpc.k3s_demo_vpc.cidr_block]
+    cidr_blocks = [var.vpc_cidr_block]
   }
 
   egress {
@@ -110,7 +96,6 @@ resource "aws_security_group" "k3s_demo_SG" {
     Environment = "Calico Demo"
     Name        = "Calico Demo SG"
   }
-
 }
 
 resource "tls_private_key" "k3s_demo_key" {
@@ -120,7 +105,7 @@ resource "tls_private_key" "k3s_demo_key" {
 
 resource "local_file" "k3s_demo_private_key" {
   content         = tls_private_key.k3s_demo_key.private_key_pem
-  filename        = var.cluster_key_name
+  filename        = var.key_name
   file_permission = "0600"
 }
 
@@ -167,9 +152,9 @@ resource "aws_instance" "k3s_demo_cp" {
       "chmod +x /tmp/prepare.sh",
       "sudo /tmp/prepare.sh ${var.k3s_version}",
       "chmod +x /tmp/k3s-cp.sh",
-      "sudo /tmp/k3s-cp.sh ${var.pod_cidr_block} ${var.service_cidr_block} ${var.cluster_domain} ${var.k3s_features} ${var.disable_cloud_provider}",
+      "sudo /tmp/k3s-cp.sh ${var.pod_cidr} ${var.service_cidr} ${var.cluster_domain} ${var.k3s_features} ${var.disable_cloud_provider}",
       "chmod +x /tmp/calico-install.sh",
-      "sudo /tmp/calico-install.sh ${var.pod_cidr_block}"
+      "sudo /tmp/calico-install.sh ${var.pod_cidr}"
     ]
   }
 
@@ -181,7 +166,7 @@ resource "aws_instance" "k3s_demo_cp" {
   ebs_optimized           = false
   tags = {
     Environment = "Calico Demo"
-    Name        = "K3s Demo Instance cp 1"
+    Name        = "K3s Demo Instance CP ${var.cluster_name}"
   }
 }
 
@@ -219,7 +204,7 @@ resource "aws_instance" "k3s_demo_worker_" {
   }
 
   provisioner "file" {
-    source      = var.cluster_key_name
+    source      = var.key_name
     destination = "/home/ubuntu/calico-demo.pem"
   }
 
@@ -236,6 +221,24 @@ resource "aws_instance" "k3s_demo_worker_" {
   ebs_optimized           = false
   tags = {
     Environment = "Calico Demo"
-    Name        = "K3s Demo Instance ${count.index}"
+    Name        = "K3s Demo Instance Worker ${var.cluster_name} - ${count.index}"
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
