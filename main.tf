@@ -8,6 +8,10 @@ terraform {
         }
 }
 
+provider "aws" {
+  region = var.aws_region
+}
+
 # Create a Shared VPC for Both Clusters
 resource "aws_vpc" "main_vpc" {
   cidr_block           = var.vpc_cidr_block
