@@ -6,6 +6,9 @@ Terraform project to delpoy multiple clusters in AWS
 
 Clone the repository.
 ```
+curl -o terraform.zip https://releases.hashicorp.com/terraform/1.5.6/terraform_1.5.6_linux_amd64.zip && unzip terraform.zip && sudo mv terraform /usr/local/bin/
+
+
 git clone https://github.com/sorianfr/demo-cluster.git
 cd demo-cluster
 ```
