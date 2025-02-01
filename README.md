@@ -14,7 +14,7 @@ A simple terraform project to quickly test out K8s variations.
 
 Clone the repository.
 ```
-git clone https://github.com/frozenprocess/demo-cluster.git
+git clone https://github.com/sorianfr/demo-cluster.git
 cd demo-cluster
 ```
 
