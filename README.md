@@ -155,6 +155,49 @@ Use the following command to check the BGP status:
 ```
 kubectl --context cluster-a exec -n calico-system ds/calico-node -c calico-node -- birdcl show protocols
 ```
+```
+export SG_CLUSTER_A=$(aws ec2 describe-security-groups \
+    --filters Name=group-name,Values="Calico Demo cluster-a SG" \
+    --query "SecurityGroups[0].GroupId" --output text)
+
+export SG_CLUSTER_B=$(aws ec2 describe-security-groups \
+    --filters Name=group-name,Values="Calico Demo cluster-b SG" \
+    --query "SecurityGroups[0].GroupId" --output text)
+
+```
+
+Authorize 
+```
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_A \
+    --protocol tcp \
+    --port 179 \
+    --source-group $SG_CLUSTER_B \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_B \
+    --protocol tcp \
+    --port 179 \
+    --source-group $SG_CLUSTER_A \
+    --region us-east-1
+```
+
+```
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_A \
+    --protocol 4 \
+    --port 0 \
+    --source-group $SG_CLUSTER_B \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_B \
+    --protocol 4 \
+    --port 0 \
+    --source-group $SG_CLUSTER_A \
+    --region us-east-1
+```
 
 
 # Clean up
