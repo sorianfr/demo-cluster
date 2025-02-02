@@ -109,10 +109,53 @@ spec:
     - cidr: 10.53.0.0/16
 EOF
 ```
+BGP Peers
 
+```
+kubectl create --context cluster-a -f -<<EOF
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: bgp2clusterb-control
+spec:
+  peerIP: $CLUSTER_B_CONTROL_IP
+  asNumber: 65002
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: bgp2clusterb-worker
+spec:
+  peerIP: $CLUSTER_B_WORKER_IP
+  asNumber: 65002
+EOF
 ```
 
 ```
+kubectl create --context cluster-b -f -<<EOF
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: bgp2clustera-control
+spec:
+  peerIP: $CLUSTER_A_CONTROL_IP
+  asNumber: 65001
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: bgp2clustera-worker
+spec:
+  peerIP: $CLUSTER_A_WORKER_IP
+  asNumber: 65001
+EOF
+```
+
+Use the following command to check the BGP status:
+```
+kubectl --context cluster-a exec -n calico-system ds/calico-node -c calico-node -- birdcl show protocols
+```
+
 
 # Clean up
 Keep in mind that cloud providers charge you based on the time that you have spent on running resources,at any point you can use `terraform destroy` to completely destroy the project and.
