@@ -278,6 +278,36 @@ To restart CoreDNS:
 kubectl rollout restart deployment coredns -n kube-system
 ```
 
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_A \
+    --protocol tcp \
+    --port 53 \
+    --source-group $SG_CLUSTER_B \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_A \
+    --protocol udp \
+    --port 53 \
+    --source-group $SG_CLUSTER_B \
+    --region us-east-1
+
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_B \
+    --protocol tcp \
+    --port 53 \
+    --source-group $SG_CLUSTER_A \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_CLUSTER_B \
+    --protocol udp \
+    --port 53 \
+    --source-group $SG_CLUSTER_A \
+    --region us-east-1
+
+
 aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
     --protocol udp --port 53 --cidr 10.43.0.0/16
 
