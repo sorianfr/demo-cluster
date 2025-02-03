@@ -65,7 +65,7 @@ export KUBECONFIG=$PWD/ca-config:$PWD/cb-config
 ```
 alias kubectl="kubectl --insecure-skip-tls-verify"
 ```
-#BGP Configuration
+# BGP Configuration
 ```
 kubectl --context cluster-a create -f -<<EOF
 apiVersion: projectcalico.org/v3
@@ -97,7 +97,7 @@ spec:
     - cidr: 10.53.0.0/16
 EOF
 ```
-#BGP Peers
+# BGP Peers
 ```
 kubectl create --context cluster-a -f -<<EOF
 apiVersion: projectcalico.org/v3
@@ -195,7 +195,7 @@ aws ec2 authorize-security-group-ingress \
     --region us-east-1
 ```
 
-#IPPOOLS
+# IPPOOLS
 ```
 kubectl --context cluster-a create -f -<<EOF
 apiVersion: crd.projectcalico.org/v1
