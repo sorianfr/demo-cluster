@@ -43,41 +43,29 @@ After the deployment is finished we need to transfer the config file from each c
 Use the following command to copy the cluster-a config file:
 
 ```
-export PUBLIC_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip')
-echo "Public IP for cluster-a: $PUBLIC_IP"
-
 scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip'):~/.kube/config ca-config
 
 scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-b.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip'):~/.kube/config cb-config
 
-
-
 sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip')/" ca-config
 sed -i "s/default/cluster-a/" ca-config
-
 
 sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip')/" cb-config
 sed -i "s/default/cluster-b/" cb-config
 
-
 export CLUSTER_A_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_private_ip')
-
 export CLUSTER_A_WORKER_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].workers_ip.private_ip[0]')
 
-
 export CLUSTER_B_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_private_ip')
-
 export CLUSTER_B_WORKER_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].workers_ip.private_ip[0]')
 
 export KUBECONFIG=$PWD/ca-config:$PWD/cb-config
-
-
 ```
 
 ```
 alias kubectl="kubectl --insecure-skip-tls-verify"
 ```
-
+#BGP Configuration
 ```
 kubectl --context cluster-a create -f -<<EOF
 apiVersion: projectcalico.org/v3
@@ -109,8 +97,7 @@ spec:
     - cidr: 10.53.0.0/16
 EOF
 ```
-BGP Peers
-
+#BGP Peers
 ```
 kubectl create --context cluster-a -f -<<EOF
 apiVersion: projectcalico.org/v3
@@ -165,7 +152,16 @@ export SG_CLUSTER_B=$(aws ec2 describe-security-groups \
     --query "SecurityGroups[0].GroupId" --output text)
 
 ```
+```
+kubectl --context cluster-a exec -n calico-system ds/calico-node -c calico-node -- birdcl show route
+```
+We create in Cluster A an nginx pod and we expose it as a service
+```
+kubectl create --context cluster-a deployment nginx --image=nginx
+kubectl create --context cluster-a service nodeport nginx --tcp 80:80
+```
 
+```
 Authorize 
 ```
 aws ec2 authorize-security-group-ingress \
@@ -198,6 +194,93 @@ aws ec2 authorize-security-group-ingress \
     --source-group $SG_CLUSTER_A \
     --region us-east-1
 ```
+
+#IPPOOLS
+```
+kubectl --context cluster-a create -f -<<EOF
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: cluster-b-svc-cidr
+spec:
+  cidr: 10.53.0.0/16
+  ipipMode: CrossSubnet
+  natOutgoing: false
+  disabled: true
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: cluster-b-pod-cidr
+spec:
+  cidr: 10.52.0.0/16
+  ipipMode: CrossSubnet
+  natOutgoing: false
+  disabled: true
+EOF
+```
+
+```
+kubectl --context cluster-b create -f -<<EOF
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: cluster-a-svc-cidr
+spec:
+  cidr: 10.43.0.0/16
+  ipipMode: CrossSubnet
+  natOutgoing: false
+  disabled: true
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: cluster-a-pod-cidr
+spec:
+  cidr: 10.42.0.0/16
+  ipipMode: CrossSubnet
+  natOutgoing: false
+  disabled: true
+EOF
+```
+We patch felixconfiguration with the external nodes.
+```
+kubectl --context cluster-a patch felixconfiguration default \
+    --type='merge' \
+    -p '{"spec":{"externalNodesList":["172.16.3.0/24", "172.16.4.0/24"]}}'
+```
+```
+kubectl --context cluster-b patch felixconfiguration default \
+    --type='merge' \
+    -p '{"spec":{"externalNodesList":["172.16.1.0/24", "172.16.2.0/24"]}}'
+
+```
+Curl to pod should work now fron cluster-b but curl to severice it wont as by default it's set ExternalTrafficPolicy to Cluster. We set it to local
+
+kubectl run tmp-shell --rm -i --tty --image nicolaka/netshoot -- /bin/bash
+```
+kubectl patch service nginx -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+```
+DNS:
+
+if curl nginx from a pod doesnt work (from cluster-a), restart coredns
+
+kubectl rollout restart deployment coredns -n kube-system
+
+
+```
+
+aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
+    --protocol udp --port 53 --cidr 10.43.0.0/16
+
+aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
+    --protocol tcp --port 53 --cidr 10.43.0.0/16
+
+aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
+    --protocol udp --port 53 --cidr 10.53.0.0/16
+
+aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
+    --protocol tcp --port 53 --cidr 10.53.0.0/16
 
 
 # Clean up
