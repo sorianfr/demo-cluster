@@ -142,6 +142,7 @@ Use the following command to check the BGP status:
 ```
 kubectl --context cluster-a exec -n calico-system ds/calico-node -c calico-node -- birdcl show protocols
 ```
+We store the security group ids for each cluster
 ```
 export SG_CLUSTER_A=$(aws ec2 describe-security-groups \
     --filters Name=group-name,Values="Calico Demo cluster-a SG" \
@@ -150,7 +151,6 @@ export SG_CLUSTER_A=$(aws ec2 describe-security-groups \
 export SG_CLUSTER_B=$(aws ec2 describe-security-groups \
     --filters Name=group-name,Values="Calico Demo cluster-b SG" \
     --query "SecurityGroups[0].GroupId" --output text)
-
 ```
 ```
 kubectl --context cluster-a exec -n calico-system ds/calico-node -c calico-node -- birdcl show route
@@ -161,7 +161,7 @@ kubectl create --context cluster-a deployment nginx --image=nginx
 kubectl create --context cluster-a service nodeport nginx --tcp 80:80
 ```
 
-```
+
 Authorize 
 ```
 aws ec2 authorize-security-group-ingress \
@@ -196,6 +196,7 @@ aws ec2 authorize-security-group-ingress \
 ```
 
 # IPPOOLS
+For Cluster A:
 ```
 kubectl --context cluster-a create -f -<<EOF
 apiVersion: crd.projectcalico.org/v1
@@ -219,7 +220,7 @@ spec:
   disabled: true
 EOF
 ```
-
+For Cluster B:
 ```
 kubectl --context cluster-b create -f -<<EOF
 apiVersion: crd.projectcalico.org/v1
@@ -253,21 +254,23 @@ kubectl --context cluster-a patch felixconfiguration default \
 kubectl --context cluster-b patch felixconfiguration default \
     --type='merge' \
     -p '{"spec":{"externalNodesList":["172.16.1.0/24", "172.16.2.0/24"]}}'
-
 ```
-Curl to pod should work now fron cluster-b but curl to severice it wont as by default it's set ExternalTrafficPolicy to Cluster. We set it to local
-
-kubectl run tmp-shell --rm -i --tty --image nicolaka/netshoot -- /bin/bash
+At this point, curl to pod should work now fron cluster-b but curl to severice it won´t as by default it's set ExternalTrafficPolicy to Cluster. We need to set it to Local
 ```
 kubectl patch service nginx -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+```
+
+```
+kubectl run tmp-shell --rm -i --tty --image nicolaka/netshoot -- /bin/bash
 ```
 DNS:
 
 if curl nginx from a pod doesnt work (from cluster-a), restart coredns
 
+To restart CoreDNS:
+
+```
 kubectl rollout restart deployment coredns -n kube-system
-
-
 ```
 
 aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
