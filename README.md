@@ -40,7 +40,7 @@ terraform apply
 
 After the deployment is finished we need to transfer the config file from each cluster to our local computer.
 
-Use the following command to copy the cluster-a config file:
+Use the following command to copy the cluster-a and cluster-b config files locally and override localhost with public_ips, and set cluster names:
 
 ```
 scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i cluster-a.pem ubuntu@$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_public_ip'):~/.kube/config ca-config
@@ -52,13 +52,18 @@ sed -i "s/default/cluster-a/" ca-config
 
 sed -i "s/127.0.0.1/$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_public_ip')/" cb-config
 sed -i "s/default/cluster-b/" cb-config
+```
 
+```
 export CLUSTER_A_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].instance_1_private_ip')
 export CLUSTER_A_WORKER_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-a"].workers_ip.private_ip[0]')
 
 export CLUSTER_B_CONTROL_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].instance_1_private_ip')
 export CLUSTER_B_WORKER_IP=$(terraform output -json | jq -r '.kubernetes_clusters.value["cluster-b"].workers_ip.private_ip[0]')
+```
 
+
+```
 export KUBECONFIG=$PWD/ca-config:$PWD/cb-config
 ```
 
