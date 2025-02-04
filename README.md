@@ -311,7 +311,14 @@ aws ec2 authorize-security-group-ingress \
  
 
 # CoreDNS ConfigMap
+It´s best to edit directly from inside the cluster
 
+```
+export EDITOR=nano
+kubectl --context cluster-b edit cm -n kube-system coredns
+kubectl edit cm -n kube-system coredns
+
+```
 ```
   Corefile: |
     .:53 {
@@ -327,15 +334,22 @@ aws ec2 authorize-security-group-ingress \
         loop
         reload
         loadbalance
+        import /etc/coredns/custom/*.override
     }
     cluster-a.local:53 {
         errors
         cache 30
         forward . 10.43.0.10
     }
+    import /etc/coredns/custom/*.server
 ```
 
-also check if /etc/resolv.conf in the worker nodes needs to be replaced with nameserver 8.8.8.8
+```
+kubectl rollout restart deployment coredns -n kube-system
+kubectl --context cluster-b rollout restart deployment coredns -n kube-system
+```
+
+YOU DONT NEED TO DO AUTHORIZATION AS ALL TRAFFIC IS ALLOWED IN ALL PROTOCOLS
 # Clean up
 Keep in mind that cloud providers charge you based on the time that you have spent on running resources,at any point you can use `terraform destroy` to completely destroy the project and.
 
