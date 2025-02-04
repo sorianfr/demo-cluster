@@ -320,7 +320,33 @@ aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
 aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
     --protocol tcp --port 53 --cidr 10.53.0.0/16
 
+ 
 
+# CoreDNS ConfigMap
+
+
+  Corefile: |
+    .:53 {
+        errors
+        health
+        kubernetes cluster-b.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        forward . 8.8.8.8 1.1.1.1
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    cluster-a.local:53 {
+        errors
+        cache 30
+        forward . 10.43.0.10
+    }
+
+also check if /etc/resolv.conf in the worker nodes needs to be replaced with nameserver 8.8.8.8
 # Clean up
 Keep in mind that cloud providers charge you based on the time that you have spent on running resources,at any point you can use `terraform destroy` to completely destroy the project and.
 
