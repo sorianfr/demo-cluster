@@ -308,23 +308,11 @@ aws ec2 authorize-security-group-ingress \
     --region us-east-1
 
 
-aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
-    --protocol udp --port 53 --cidr 10.43.0.0/16
-
-aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_A \
-    --protocol tcp --port 53 --cidr 10.43.0.0/16
-
-aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
-    --protocol udp --port 53 --cidr 10.53.0.0/16
-
-aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
-    --protocol tcp --port 53 --cidr 10.53.0.0/16
-
  
 
 # CoreDNS ConfigMap
 
-
+```
   Corefile: |
     .:53 {
         errors
@@ -345,6 +333,7 @@ aws ec2 authorize-security-group-ingress --group-id $SG_CLUSTER_B \
         cache 30
         forward . 10.43.0.10
     }
+```
 
 also check if /etc/resolv.conf in the worker nodes needs to be replaced with nameserver 8.8.8.8
 # Clean up
