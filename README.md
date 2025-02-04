@@ -348,6 +348,18 @@ kubectl edit cm -n kube-system coredns
 kubectl rollout restart deployment coredns -n kube-system
 kubectl --context cluster-b rollout restart deployment coredns -n kube-system
 ```
+```
+kubectl --context cluster-b run tmp-shell --rm -i --tty --image nicolaka/netshoot -- /bin/bash
+```
+
+```
+tmp-shell:~# nslookup nginx.default.svc.cluster-a.local
+Server:         10.53.0.10
+Address:        10.53.0.10#53
+
+Name:   nginx.default.svc.cluster-a.local
+Address: 10.43.21.156
+```
 
 YOU DONT NEED TO DO AUTHORIZATION AS ALL TRAFFIC IS ALLOWED IN ALL PROTOCOLS
 # Clean up
