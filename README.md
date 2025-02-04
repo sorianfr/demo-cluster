@@ -167,7 +167,7 @@ kubectl create --context cluster-a service nodeport nginx --tcp 80:80
 ```
 
 
-Authorize 
+Authorize (NOT REQUIRED AS ALL TRAFFIC IS OPEN)
 ```
 aws ec2 authorize-security-group-ingress \
     --group-id $SG_CLUSTER_A \
@@ -278,6 +278,9 @@ To restart CoreDNS:
 kubectl rollout restart deployment coredns -n kube-system
 ```
 
+
+Authorize (NOT REQUIRED AS ALL TRAFFIC IS OPEN)
+```
 aws ec2 authorize-security-group-ingress \
     --group-id $SG_CLUSTER_A \
     --protocol tcp \
@@ -306,9 +309,8 @@ aws ec2 authorize-security-group-ingress \
     --port 53 \
     --source-group $SG_CLUSTER_A \
     --region us-east-1
+```
 
-
- 
 
 # CoreDNS ConfigMap
 It´s best to edit directly from inside the cluster
