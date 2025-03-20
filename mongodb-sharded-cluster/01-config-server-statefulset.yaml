@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-config
+  namespace: mongo-shard-cluster 
+spec:
+  serviceName: mongo-config
+  replicas: 3
+  selector:
+    matchLabels:
+      role: mongo-config
+  template:
+    metadata:
+      labels:
+        role: mongo-config
+    spec:
+      containers:
+      - name: mongo-config
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        command:
+        - mongod
+        - "--configsvr"
+        - "--replSet"
+        - "configReplSet"
+        - "--dbpath"
+        - "/data/db"
+        volumeMounts:
+        - name: data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 5Gi

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-shard1
+  namespace: mongo-shard-cluster 
+spec:
+  serviceName: mongo-shard1
+  replicas: 3
+  selector:
+    matchLabels:
+      role: mongo-shard1
+  template:
+    metadata:
+      labels:
+        role: mongo-shard1
+    spec:
+      containers:
+      - name: mongo-shard1
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        command:
+        - mongod
+        - "--shardsvr"
+        - "--replSet"
+        - "shard1ReplSet"
+        - "--dbpath"
+        - "/data/db"
+        volumeMounts:
+        - name: data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-shard2
+  namespace: mongo-shard-cluster 
+spec:
+  serviceName: mongo-shard2
+  replicas: 3
+  selector:
+    matchLabels:
+      role: mongo-shard2
+  template:
+    metadata:
+      labels:
+        role: mongo-shard2
+    spec:
+      containers:
+      - name: mongo-shard2
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        command:
+        - mongod
+        - "--shardsvr"
+        - "--replSet"
+        - "shard2ReplSet"
+        - "--dbpath"
+        - "/data/db"
+        volumeMounts:
+        - name: data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

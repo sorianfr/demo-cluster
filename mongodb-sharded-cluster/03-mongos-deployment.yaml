@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-router
+  namespace: mongo-shard-cluster 
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      role: mongo-router
+  template:
+    metadata:
+      labels:
+        role: mongo-router
+    spec:
+      containers:
+      - name: mongo-router
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        command:
+        - mongos
+        - "--configdb"
+        - "configReplSet/mongo-config-0.mongo-config:27017,mongo-config-1.mongo-config:27017,mongo-config-2.mongo-config:27017"
